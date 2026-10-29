@@ -1,0 +1,199 @@
+{
+  "karate": {
+    "source": "networkx.karate_club_graph() (same network as soc-karate)",
+    "nodes": 34,
+    "edges": 78,
+    "iterations": 45,
+    "vs_networkx": {
+      "max_abs_diff": 1.4857983871019442e-09,
+      "spearman": 1.0,
+      "kendall_tau": 0.9999999999999999,
+      "top10_overlap": 1.0
+    },
+    "top10": [
+      {
+        "node": 34,
+        "pagerank": 0.1009,
+        "club": "Officer",
+        "degree": 17
+      },
+      {
+        "node": 1,
+        "pagerank": 0.097,
+        "club": "Mr. Hi",
+        "degree": 16
+      },
+      {
+        "node": 33,
+        "pagerank": 0.0717,
+        "club": "Officer",
+        "degree": 12
+      },
+      {
+        "node": 3,
+        "pagerank": 0.0571,
+        "club": "Mr. Hi",
+        "degree": 10
+      },
+      {
+        "node": 2,
+        "pagerank": 0.0529,
+        "club": "Mr. Hi",
+        "degree": 9
+      },
+      {
+        "node": 32,
+        "pagerank": 0.0372,
+        "club": "Officer",
+        "degree": 6
+      },
+      {
+        "node": 4,
+        "pagerank": 0.0359,
+        "club": "Mr. Hi",
+        "degree": 6
+      },
+      {
+        "node": 24,
+        "pagerank": 0.0315,
+        "club": "Officer",
+        "degree": 5
+      },
+      {
+        "node": 9,
+        "pagerank": 0.0298,
+        "club": "Mr. Hi",
+        "degree": 5
+      },
+      {
+        "node": 14,
+        "pagerank": 0.0295,
+        "club": "Mr. Hi",
+        "degree": 5
+      }
+    ],
+    "iterations_by_damping": {
+      "0.5": 19,
+      "0.65": 25,
+      "0.75": 32,
+      "0.85": 45,
+      "0.95": 70
+    }
+  },
+  "wikipedia": {
+    "nodes": 99998,
+    "edges": 8572670,
+    "closed_graph": true,
+    "iterations": 61,
+    "dangling": 203,
+    "top1pct_share": 0.2820961910590045,
+    "vs_networkx_subgraph": {
+      "max_abs_diff": 1.0258365192727806e-07,
+      "spearman": 0.9999999955288651,
+      "kendall_tau": 0.9999968537901376,
+      "top10_overlap": 1.0
+    },
+    "top20": [
+      {
+        "page": "ISBN (identifier)",
+        "pagerank": 0.009806,
+        "in_links": 51534
+      },
+      {
+        "page": "Doi (identifier)",
+        "pagerank": 0.006266,
+        "in_links": 31461
+      },
+      {
+        "page": "ISSN (identifier)",
+        "pagerank": 0.005016,
+        "in_links": 23311
+      },
+      {
+        "page": "Wayback Machine",
+        "pagerank": 0.004716,
+        "in_links": 24295
+      },
+      {
+        "page": "S2CID (identifier)",
+        "pagerank": 0.003286,
+        "in_links": 17819
+      },
+      {
+        "page": "OCLC (identifier)",
+        "pagerank": 0.002311,
+        "in_links": 11887
+      },
+      {
+        "page": "PMID (identifier)",
+        "pagerank": 0.002258,
+        "in_links": 9911
+      },
+      {
+        "page": "Bibcode (identifier)",
+        "pagerank": 0.002046,
+        "in_links": 12396
+      },
+      {
+        "page": "JSTOR (identifier)",
+        "pagerank": 0.001815,
+        "in_links": 11253
+      },
+      {
+        "page": "United States",
+        "pagerank": 0.001673,
+        "in_links": 9016
+      },
+      {
+        "page": "The New York Times",
+        "pagerank": 0.001621,
+        "in_links": 8003
+      },
+      {
+        "page": "PMC (identifier)",
+        "pagerank": 0.001471,
+        "in_links": 6368
+      },
+      {
+        "page": "Time zone",
+        "pagerank": 0.001293,
+        "in_links": 9293
+      },
+      {
+        "page": "Hdl (identifier)",
+        "pagerank": 0.00111,
+        "in_links": 5974
+      },
+      {
+        "page": "World War II",
+        "pagerank": 0.001091,
+        "in_links": 6186
+      },
+      {
+        "page": "International Organization for Standardization",
+        "pagerank": 0.00104,
+        "in_links": 428
+      },
+      {
+        "page": "United Kingdom",
+        "pagerank": 0.001037,
+        "in_links": 6053
+      },
+      {
+        "page": "The Guardian",
+        "pagerank": 0.000953,
+        "in_links": 5298
+      },
+      {
+        "page": "Daylight saving time",
+        "pagerank": 0.000936,
+        "in_links": 6899
+      },
+      {
+        "page": "France",
+        "pagerank": 0.000888,
+        "in_links": 6089
+      }
+    ]
+  }
+}

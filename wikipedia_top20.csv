@@ -1,0 +1,21 @@
+rank,page,pagerank,in_links,out_links
+1,ISBN (identifier),0.009806,51534,185
+2,Doi (identifier),0.006266,31461,152
+3,ISSN (identifier),0.005016,23311,139
+4,Wayback Machine,0.004716,24295,67
+5,S2CID (identifier),0.003286,17819,34
+6,OCLC (identifier),0.002311,11887,26
+7,PMID (identifier),0.002258,9911,36
+8,Bibcode (identifier),0.002046,12396,7
+9,JSTOR (identifier),0.001815,11253,26
+10,United States,0.001673,9016,381
+11,The New York Times,0.001621,8003,227
+12,PMC (identifier),0.001471,6368,39
+13,Time zone,0.001293,9293,331
+14,Hdl (identifier),0.00111,5974,14
+15,World War II,0.001091,6186,389
+16,International Organization for Standardization,0.00104,428,150
+17,United Kingdom,0.001037,6053,564
+18,The Guardian,0.000953,5298,174
+19,Daylight saving time,0.000936,6899,118
+20,France,0.000888,6089,545

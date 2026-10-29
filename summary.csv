@@ -1,0 +1,3 @@
+network,type,nodes,edges,iterations (tol 1e-8),max |ours − networkx|
+Karate Club,undirected social,34,78,45,1.4857983871019442e-09
+Wikipedia 100K,directed encyclopedia,99998,8572670,61,1.0258365192727806e-07
