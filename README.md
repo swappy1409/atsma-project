@@ -9,8 +9,8 @@ PageRank implemented from scratch (power iteration), verified against NetworkX, 
 
 | | |
 |---|---|
-| 📊 Presentation | [Slides (17, with speaker notes)](https://claude.ai/artifact/JAcSMWMX8NUUN3Fnxu9Nvx) |
-| 🖥️ Demo application | [PageRank Explorer (live)](https://claude.ai/artifact/ENij4N89ywMKyusQ54Sq6j) · [`demo-app/index.html`](demo-app/index.html) |
+| 📊 Presentation | [17 Slides](https://claude.ai/artifact/JAcSMWMX8NUUN3Fnxu9Nvx) |
+| 🖥️ Demo application | [PageRank Explorer (live)] · [`demo-app/index.html`](demo-app/index.html) |
 | 🎬 Demo video | [Watch online (4:04)](https://claude.ai/artifact/JRoCjCB1EEv5RkgNCL2eSR) · [`video/PageRank_Demo_Video.mp4`](video/PageRank_Demo_Video.mp4) · [subtitles](video/PageRank_Demo_Video.srt) |
 | 📄 Report (PDF) | [`docs/PageRank_Project_Report.pdf`](docs/PageRank_Project_Report.pdf) |
 | 📓 Notebook | [`PageRank_Web_Analytics.ipynb`](PageRank_Web_Analytics.ipynb) |
