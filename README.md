@@ -9,15 +9,15 @@ PageRank implemented from scratch (power iteration), verified against NetworkX, 
 
 | | |
 |---|---|
-| 📊 Presentation | [17 Slides](https://claude.ai/artifact/JAcSMWMX8NUUN3Fnxu9Nvx) |
-| 🖥️ Demo application | [PageRank Explorer (live)] · [`demo-app/index.html`](demo-app/index.html) |
-| 🎬 Demo video | [Watch online (4:04)](https://claude.ai/artifact/JRoCjCB1EEv5RkgNCL2eSR) · [`video/PageRank_Demo_Video.mp4`](video/PageRank_Demo_Video.mp4) · [subtitles](video/PageRank_Demo_Video.srt) |
-| 📄 Report (PDF) | [`docs/PageRank_Project_Report.pdf`](docs/PageRank_Project_Report.pdf) |
+| 📊 Presentation | [`presentation/`](https://github.com/swappy1409/atsma-project/tree/main/presentation) · [PageRank_Presentation.pdf](presentation/PageRank_Presentation.pdf) |
+| 🖥️ Demo application | [`demo-app/`](https://github.com/swappy1409/atsma-project/tree/main/demo-app) · download [`index.html`](demo-app/index.html) and open it in a browser |
+| 🎬 Demo video | [`video/`](https://github.com/swappy1409/atsma-project/tree/main/video) · [PageRank_Demo_Video.mp4](video/PageRank_Demo_Video.mp4) (4:04) · [subtitles](video/PageRank_Demo_Video.srt) |
+| 📄 Report (PDF) | [`docs/`](https://github.com/swappy1409/atsma-project/tree/main/docs) · [PageRank_Project_Report.pdf](docs/PageRank_Project_Report.pdf) |
 | 📓 Notebook | [`PageRank_Web_Analytics.ipynb`](PageRank_Web_Analytics.ipynb) |
-| 🐍 Source code | [`src/pagerank_web_analytics.py`](src/pagerank_web_analytics.py) |
-| 📥 Input data | [`data/`](data/) |
-| 🔄 Intermediate data | [`intermediate/`](intermediate/) |
-| 📈 Output data & charts | [`outputs/`](outputs/) |
+| 🐍 Source code | [`src/`](https://github.com/swappy1409/atsma-project/tree/main/src) · [pagerank_web_analytics.py](src/pagerank_web_analytics.py) |
+| 📥 Input data | [`data/`](https://github.com/swappy1409/atsma-project/tree/main/data) |
+| 🔄 Intermediate data | [`intermediate/`](https://github.com/swappy1409/atsma-project/tree/main/intermediate) |
+| 📈 Output data & charts | [`outputs/`](https://github.com/swappy1409/atsma-project/tree/main/outputs) |
 
 ## Results
 
