@@ -9,7 +9,7 @@ PageRank implemented from scratch (power iteration), verified against NetworkX, 
 
 | | |
 |---|---|
-| 📊 Presentation | [`presentation/`](https://github.com/swappy1409/atsma-project/tree/main/presentation) · [PageRank_Presentation.pdf](presentation/PageRank_Presentation.pdf) |
+| 📊 Presentation | [`presentation/`](https://github.com/swappy1409/atsma-project/tree/main/presentation) · [17 slides (PDF)](presentation/PageRank_Presentation.pdf) |
 | 🖥️ Demo application | [`demo-app/`](https://github.com/swappy1409/atsma-project/tree/main/demo-app) · download [`index.html`](demo-app/index.html) and open it in a browser |
 | 🎬 Demo video | [`video/`](https://github.com/swappy1409/atsma-project/tree/main/video) · [PageRank_Demo_Video.mp4](video/PageRank_Demo_Video.mp4) (4:04) · [subtitles](video/PageRank_Demo_Video.srt) |
 | 📄 Report (PDF) | [`docs/`](https://github.com/swappy1409/atsma-project/tree/main/docs) · [PageRank_Project_Report.pdf](docs/PageRank_Project_Report.pdf) |
