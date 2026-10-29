@@ -1,0 +1,120 @@
+1
+00:00:00,798 --> 00:00:08,744
+Demo: PageRank web analytics, implemented from scratch and tested on real networks.
+
+2
+00:00:08,744 --> 00:00:16,460
+PageRank models a random surfer: follow a link with probability d = 0.85, or jump to a random page.
+
+3
+00:00:16,460 --> 00:00:22,704
+pagerank_simple() translates the formula directly, using Python dictionaries.
+
+4
+00:00:22,704 --> 00:00:30,014
+Dangling pages (no out-links) would leak rank, so their mass is spread evenly over all pages.
+
+5
+00:00:30,014 --> 00:00:35,790
+Each iteration: PR(v) = (1 − d)/N + d · ( Σ PR(u)/L(u) + dangling/N ).
+
+6
+00:00:35,790 --> 00:00:42,271
+We stop when the total L1 change between two iterations drops below 10⁻⁸.
+
+7
+00:00:42,271 --> 00:00:49,452
+pagerank_sparse() does the same with a SciPy CSR matrix, so it scales to millions of links.
+
+8
+00:00:49,452 --> 00:00:56,398
+One sparse matrix–vector product per iteration replaces the per-node loops.
+
+9
+00:00:56,398 --> 00:01:02,639
+The demo app runs the same algorithm in the browser. First, a 4-page toy web.
+
+10
+00:01:02,639 --> 00:01:14,243
+Every page starts at 1/N = 0.25. Each click on Step is one power iteration.
+
+11
+00:01:14,243 --> 00:01:25,693
+After three steps C already leads, and D is falling toward its floor.
+
+12
+00:01:25,693 --> 00:01:32,206
+Run to convergence: 47 iterations. C ends highest because three pages link to it.
+
+13
+00:01:32,206 --> 00:01:39,897
+D has no in-links, so it keeps only the teleport share (1 − d)/N = 0.0375.
+
+14
+00:01:39,897 --> 00:01:49,537
+Dataset 1: Zachary's Karate Club, 34 members and 78 friendships. Colour shows the faction after the club split.
+
+15
+00:01:49,537 --> 00:01:56,789
+Animating the iterations: rank flows toward the best-connected members.
+
+16
+00:01:56,789 --> 00:02:03,977
+The two leaders, node 34 (administrator) and node 1 (instructor), get the highest PageRank.
+
+17
+00:02:03,977 --> 00:02:11,544
+Our values match NetworkX nx.pagerank to within 1.5 × 10⁻⁹.
+
+18
+00:02:11,544 --> 00:02:21,159
+Lower damping, d = 0.5: ranks move toward uniform and converge in only 19 iterations.
+
+19
+00:02:21,159 --> 00:02:30,685
+Higher damping, d = 0.95: ranks are more unequal (max/min 14×) but need 70 iterations.
+
+20
+00:02:30,685 --> 00:02:38,785
+Clicking a member highlights it. Node 3 bridges the two factions and ranks 4th.
+
+21
+00:02:38,785 --> 00:02:46,226
+Dataset 2: the Kaggle Wikipedia link graph, 99,998 pages and 8.57 million links after cleaning.
+
+22
+00:02:46,226 --> 00:02:53,339
+The sparse version converged in 61 iterations. The top 1% of pages hold 28.2% of all rank.
+
+23
+00:02:53,339 --> 00:03:00,724
+Citation identifiers such as ISBN, DOI and ISSN rank highest: almost every article cites them.
+
+24
+00:03:00,724 --> 00:03:10,390
+ISO has only 428 in-links yet ranks #16, because its links come from those top identifier pages.
+
+25
+00:03:10,390 --> 00:03:18,803
+Any edge list can be ranked. Here is a made-up 12-page university website.
+
+26
+00:03:18,803 --> 00:03:29,675
+Home ranks first because most pages link back to it: the navigation effect of site architecture.
+
+27
+00:03:29,675 --> 00:03:36,811
+Switching to undirected (social-network) links recomputes the ranking instantly.
+
+28
+00:03:36,811 --> 00:03:47,264
+The notebook saves every chart to outputs/. On a log scale convergence is a straight line: the error shrinks by a constant factor each step.
+
+29
+00:03:47,264 --> 00:03:55,167
+Damping sensitivity and the heavy-tailed Wikipedia distribution are explained in the report.
+
+30
+00:03:55,167 --> 00:04:02,539
+Source code, data, slides and the full report: github.com/swappy1409/atsma-project
+

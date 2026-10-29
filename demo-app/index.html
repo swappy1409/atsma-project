@@ -1,0 +1,480 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>PageRank Explorer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: header band with tabs; each view = graph canvas (left) + control/results panel (right), stacking on phones */
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --fg:#152030; --muted:#5a6779; --line:#dbe1ea;
+  --hi:#2a78d6; --off:#e0602b; --accent:#2a78d6; --soft:#e8f0fb; --good:#1f8a5b;
+  --edge:rgba(21,32,48,.22);
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e131a; --surface:#161d27; --fg:#e5eaf1; --muted:#97a3b3; --line:#283240;
+  --hi:#5b9ef2; --off:#f2834f; --accent:#5b9ef2; --soft:#1b2a3d; --good:#3fbf86; --edge:rgba(229,234,241,.22); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e131a; --surface:#161d27; --fg:#e5eaf1; --muted:#97a3b3; --line:#283240;
+  --hi:#5b9ef2; --off:#f2834f; --accent:#5b9ef2; --soft:#1b2a3d; --good:#3fbf86; --edge:rgba(229,234,241,.22); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1360px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,3vw,36px);letter-spacing:-.02em;margin:0;line-height:1.1;text-wrap:balance}
+h1 .pr{color:var(--accent)}
+.byline{color:var(--muted);font-size:13px;margin-top:4px}
+.formula{font-family:var(--mono);font-size:13px;color:var(--muted);background:var(--surface);border:1px solid var(--line);padding:6px 10px;border-radius:6px;white-space:nowrap;overflow-x:auto;max-width:100%}
+.formula b{color:var(--fg);font-weight:600}
+nav{display:flex;gap:4px;flex-wrap:wrap;margin:16px 0 18px}
+nav a{font-weight:600;font-size:14px;text-decoration:none;color:var(--muted);padding:8px 14px;border-radius:999px;border:1px solid transparent}
+nav a:hover{color:var(--fg);border-color:var(--line)}
+nav a[aria-current="page"]{background:var(--fg);color:var(--bg)}
+nav a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.view{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){.view{grid-template-columns:minmax(0,1fr)}}
+.stage{background:var(--surface);border:1px solid var(--line);border-radius:10px;position:relative;min-width:0}
+.stage canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;max-width:100%}
+.stage .cap{position:absolute;left:12px;top:10px;font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:-1px;margin-right:5px}
+.panel{display:flex;flex-direction:column;gap:16px;min-width:0}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.box h2{font-family:var(--display);font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 10px;font-weight:700}
+.lede{margin:0 0 4px;max-width:65ch}
+.ctrl{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ctrl label{font-weight:600;font-size:14px}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--accent)}
+.dval{font-family:var(--mono);font-weight:600;font-size:18px;min-width:3.2em;text-align:right}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+button{font:600 14px var(--body);padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.stat{border-left:3px solid var(--line);padding:2px 0 2px 10px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{font-family:var(--mono);font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat.ok{border-left-color:var(--good)}
+table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:6px 6px}
+td{padding:5px 6px;border-bottom:1px solid var(--line)}
+td.num{font-family:var(--mono);text-align:right}
+th.num{text-align:right}
+tr.sel td{background:var(--soft)}
+.bar{height:8px;border-radius:4px;background:var(--accent);min-width:2px}
+.tscroll{overflow-x:auto;max-height:420px;overflow-y:auto}
+.chip{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid currentColor}
+.chip.hi{color:var(--hi)} .chip.off{color:var(--off)}
+.note{font-size:13px;color:var(--muted);max-width:65ch}
+textarea{width:100%;min-height:210px;font:13px/1.45 var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:10px;resize:vertical}
+select{font:14px var(--body);padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.err{color:var(--off);font-size:13px;min-height:1em}
+svg text{fill:var(--fg)}
+.mono{font-family:var(--mono)}
+footer{margin-top:28px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <h1><span class="pr">PageRank</span> Explorer</h1>
+    <div class="byline">CSE4039 Advanced Text &amp; Social Media Analytics · Web Analytics project · VIT-AP University</div>
+  </div>
+  <div class="formula">PR(i) = <b>(1−d)/N</b> + <b>d</b> · Σ<sub>j→i</sub> PR(j) / L(j)</div>
+</header>
+
+<nav id="tabs" aria-label="Views">
+  <a href="#toy" data-v="toy">1 · Toy web (4 pages)</a>
+  <a href="#karate" data-v="karate">2 · Karate Club</a>
+  <a href="#wikipedia" data-v="wikipedia">3 · Wikipedia 100K</a>
+  <a href="#custom" data-v="custom">4 · Your own graph</a>
+</nav>
+
+<!-- TOY -->
+<section class="view" id="v-toy">
+  <div class="stage">
+    <div class="cap"><span>Node size = current PageRank · arrows = hyperlinks</span></div>
+    <canvas id="toyCanvas" width="1200" height="900" aria-label="Four-page toy web graph"></canvas>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>Power iteration, one step at a time</h2>
+      <p class="lede">Every page starts at 1/N = 0.25. Each step, every page passes <span class="mono">d</span> of its rank along its out-links and everyone gets the teleport share <span class="mono">(1−d)/N</span>.</p>
+      <div class="btns">
+        <button id="toyStep" class="primary">Step</button>
+        <button id="toyRun">Run to convergence</button>
+        <button id="toyReset">Reset</button>
+      </div>
+    </div>
+    <div class="box">
+      <div class="stats">
+        <div class="stat"><div class="k">iteration</div><div class="v" id="toyIt">0</div></div>
+        <div class="stat"><div class="k">L1 change</div><div class="v" id="toyDelta">–</div></div>
+        <div class="stat" id="toyConvBox"><div class="k">status</div><div class="v" id="toyConv">start</div></div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Current ranks</h2>
+      <table><thead><tr><th>page</th><th>links to</th><th class="num">PageRank</th><th style="width:38%"></th></tr></thead><tbody id="toyBody"></tbody></table>
+      <p class="note" style="margin-top:10px">C wins because three pages link to it. A is second because C, the strongest page, gives all of its rank to A. D has no in-links and keeps only the teleport share 0.0375.</p>
+    </div>
+  </div>
+</section>
+
+<!-- KARATE -->
+<section class="view" id="v-karate" hidden>
+  <div class="stage">
+    <div class="cap"><span><span class="dot" style="background:var(--hi)"></span>Mr. Hi's faction</span><span><span class="dot" style="background:var(--off)"></span>Officer's faction</span><span>size = PageRank</span></div>
+    <canvas id="kCanvas" width="1200" height="900" aria-label="Zachary's Karate Club network"></canvas>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>Damping factor</h2>
+      <div class="ctrl"><label for="kD">d</label><input type="range" id="kD" min="0.05" max="0.99" step="0.01" value="0.85"><span class="dval" id="kDval">0.85</span></div>
+      <div class="btns"><button id="kAnim" class="primary">Animate iterations</button><button id="kResetD">Reset d = 0.85</button></div>
+      <p class="note" style="margin:10px 0 0">Click a member on the graph to highlight them in the table.</p>
+    </div>
+    <div class="box">
+      <div class="stats">
+        <div class="stat"><div class="k">members / ties</div><div class="v">34 / 78</div></div>
+        <div class="stat"><div class="k">iterations</div><div class="v" id="kIt">–</div></div>
+        <div class="stat"><div class="k">max / min PR</div><div class="v" id="kRatio">–</div></div>
+        <div class="stat ok"><div class="k">vs NetworkX</div><div class="v">1.5e-9</div></div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Top 10 members</h2>
+      <div class="tscroll"><table><thead><tr><th>#</th><th>member</th><th>faction</th><th class="num">deg</th><th class="num">PageRank</th><th style="width:30%"></th></tr></thead><tbody id="kBody"></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<!-- WIKIPEDIA -->
+<section class="view" id="v-wikipedia" hidden>
+  <div class="stage" style="padding:14px 16px">
+    <h2 style="font-family:var(--display);font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 4px">Top 20 articles: PageRank vs. raw in-link count</h2>
+    <p class="note" style="margin:0 0 8px">Bars are scaled to the #1 article. Orange marks the in-link count; where blue is longer than orange, the page ranks higher than its in-links alone would suggest.</p>
+    <div style="overflow-x:auto"><svg id="wSvg" viewBox="0 0 800 640" width="100%" role="img" aria-label="Bar chart of top 20 Wikipedia articles"></svg></div>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>The graph we ranked</h2>
+      <div class="stats">
+        <div class="stat"><div class="k">pages</div><div class="v" id="wN"></div></div>
+        <div class="stat"><div class="k">links (cleaned)</div><div class="v" id="wE"></div></div>
+        <div class="stat"><div class="k">iterations</div><div class="v" id="wI"></div></div>
+        <div class="stat"><div class="k">dangling pages</div><div class="v" id="wDg"></div></div>
+        <div class="stat"><div class="k">rank held by top 1%</div><div class="v" id="wTop"></div></div>
+        <div class="stat ok"><div class="k">vs NetworkX (20K sample)</div><div class="v" id="wChk"></div></div>
+      </div>
+      <p class="note" style="margin:12px 0 0">Computed offline with the sparse-matrix version (SciPy CSR, tol 1e-8). Kaggle's 100K-page link graph was cleaned (self-links and duplicates removed) and closed so every link stays inside the 100K pages.</p>
+    </div>
+    <div class="box">
+      <h2>What the ranking says</h2>
+      <p class="lede" style="font-size:14px">Citation identifiers (ISBN, DOI, ISSN) sit at the top: nearly every referenced article links to them. <b>International Organization for Standardization</b> has only <span class="mono">428</span> in-links yet ranks <b>#16</b>, because its links come from those top identifier pages. PageRank weighs <i>who</i> links to you, not just how many.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CUSTOM -->
+<section class="view" id="v-custom" hidden>
+  <div class="stage">
+    <div class="cap"><span>Your graph · size = PageRank</span></div>
+    <canvas id="cCanvas" width="1200" height="900" aria-label="Custom graph"></canvas>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h2>Edge list (one link per line: source target)</h2>
+      <textarea id="cText" spellcheck="false"></textarea>
+      <div class="ctrl" style="margin-top:10px">
+        <label for="cDir">Links are</label>
+        <select id="cDir"><option value="1">directed (web)</option><option value="0">undirected (social)</option></select>
+        <label for="cD">d</label><input type="range" id="cD" min="0.05" max="0.99" step="0.01" value="0.85" style="max-width:160px"><span class="dval" id="cDval">0.85</span>
+      </div>
+      <div class="btns"><button id="cRun" class="primary">Compute PageRank</button><button id="cSample">Load example site</button></div>
+      <div class="err" id="cErr"></div>
+      <p class="note" style="margin:4px 0 0">The example is a made-up 12-page university website, not crawled data. Most pages link back to home and the menu pages, which shows the navigation effect.</p>
+    </div>
+    <div class="box">
+      <div class="stats">
+        <div class="stat"><div class="k">pages</div><div class="v" id="cN">–</div></div>
+        <div class="stat"><div class="k">links</div><div class="v" id="cE">–</div></div>
+        <div class="stat"><div class="k">dangling</div><div class="v" id="cDg">–</div></div>
+        <div class="stat"><div class="k">iterations</div><div class="v" id="cIt">–</div></div>
+      </div>
+    </div>
+    <div class="box">
+      <h2>Ranking</h2>
+      <div class="tscroll"><table><thead><tr><th>#</th><th>page</th><th class="num">in</th><th class="num">out</th><th class="num">PageRank</th><th style="width:28%"></th></tr></thead><tbody id="cBody"></tbody></table></div>
+    </div>
+  </div>
+</section>
+
+<footer>Same algorithm as the project notebook's <span class="mono">pagerank_simple()</span>: power iteration, dangling-node mass spread evenly, stop when the L1 change &lt; 1e-8. Karate results here match the Python output to 4 decimals.</footer>
+</div>
+
+<script>
+const DATA = {"karate":{"nodes":[{"id":1,"club":"Mr. Hi","x":-0.347,"y":0.034},{"id":2,"club":"Mr. Hi","x":-0.179,"y":0.162},{"id":3,"club":"Mr. Hi","x":0.012,"y":-0.039},{"id":4,"club":"Mr. Hi","x":-0.245,"y":-0.066},{"id":5,"club":"Mr. Hi","x":-0.631,"y":-0.044},{"id":6,"club":"Mr. Hi","x":-0.772,"y":0.005},{"id":7,"club":"Mr. Hi","x":-0.74,"y":-0.103},{"id":8,"club":"Mr. Hi","x":-0.238,"y":0.043},{"id":9,"club":"Mr. Hi","x":0.076,"y":0.101},{"id":10,"club":"Officer","x":0.268,"y":-0.142},{"id":11,"club":"Mr. Hi","x":-0.673,"y":0.093},{"id":12,"club":"Mr. Hi","x":-0.618,"y":0.288},{"id":13,"club":"Mr. Hi","x":-0.442,"y":-0.204},{"id":14,"club":"Mr. Hi","x":-0.059,"y":0.089},{"id":15,"club":"Officer","x":0.518,"y":0.254},{"id":16,"club":"Officer","x":0.593,"y":-0.121},{"id":17,"club":"Mr. Hi","x":-1.0,"y":-0.096},{"id":18,"club":"Mr. Hi","x":-0.344,"y":0.336},{"id":19,"club":"Officer","x":0.568,"y":0.154},{"id":20,"club":"Mr. Hi","x":-0.064,"y":0.01},{"id":21,"club":"Officer","x":0.653,"y":0.011},{"id":22,"club":"Mr. Hi","x":-0.426,"y":0.248},{"id":23,"club":"Officer","x":0.415,"y":0.29},{"id":24,"club":"Officer","x":0.455,"y":-0.207},{"id":25,"club":"Officer","x":0.209,"y":-0.492},{"id":26,"club":"Officer","x":0.346,"y":-0.441},{"id":27,"club":"Officer","x":0.693,"y":0.148},{"id":28,"club":"Officer","x":0.26,"y":-0.271},{"id":29,"club":"Officer","x":0.171,"y":-0.105},{"id":30,"club":"Officer","x":0.567,"y":-0.014},{"id":31,"club":"Officer","x":0.161,"y":0.21},{"id":32,"club":"Officer","x":0.113,"y":-0.199},{"id":33,"club":"Officer","x":0.374,"y":0.045},{"id":34,"club":"Officer","x":0.328,"y":0.022}],"edges":[[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8],[1,9],[1,11],[1,12],[1,13],[1,14],[1,18],[1,20],[1,22],[1,32],[2,3],[2,4],[2,8],[2,14],[2,18],[2,20],[2,22],[2,31],[3,4],[3,8],[3,9],[3,10],[3,14],[3,28],[3,29],[3,33],[4,8],[4,13],[4,14],[5,7],[5,11],[6,7],[6,11],[6,17],[7,17],[9,31],[9,33],[9,34],[10,34],[14,34],[15,33],[15,34],[16,33],[16,34],[19,33],[19,34],[20,34],[21,33],[21,34],[23,33],[23,34],[24,26],[24,28],[24,30],[24,33],[24,34],[25,26],[25,28],[25,32],[26,32],[27,30],[27,34],[28,34],[29,32],[29,34],[30,33],[30,34],[31,33],[31,34],[32,33],[32,34],[33,34]]},"wiki":{"top20":[{"rank":1,"page":"ISBN (identifier)","pagerank":0.009806,"in_links":51534,"out_links":185},{"rank":2,"page":"Doi (identifier)","pagerank":0.006266,"in_links":31461,"out_links":152},{"rank":3,"page":"ISSN (identifier)","pagerank":0.005016,"in_links":23311,"out_links":139},{"rank":4,"page":"Wayback Machine","pagerank":0.004716,"in_links":24295,"out_links":67},{"rank":5,"page":"S2CID (identifier)","pagerank":0.003286,"in_links":17819,"out_links":34},{"rank":6,"page":"OCLC (identifier)","pagerank":0.002311,"in_links":11887,"out_links":26},{"rank":7,"page":"PMID (identifier)","pagerank":0.002258,"in_links":9911,"out_links":36},{"rank":8,"page":"Bibcode (identifier)","pagerank":0.002046,"in_links":12396,"out_links":7},{"rank":9,"page":"JSTOR (identifier)","pagerank":0.001815,"in_links":11253,"out_links":26},{"rank":10,"page":"United States","pagerank":0.001673,"in_links":9016,"out_links":381},{"rank":11,"page":"The New York Times","pagerank":0.001621,"in_links":8003,"out_links":227},{"rank":12,"page":"PMC (identifier)","pagerank":0.001471,"in_links":6368,"out_links":39},{"rank":13,"page":"Time zone","pagerank":0.001293,"in_links":9293,"out_links":331},{"rank":14,"page":"Hdl (identifier)","pagerank":0.00111,"in_links":5974,"out_links":14},{"rank":15,"page":"World War II","pagerank":0.001091,"in_links":6186,"out_links":389},{"rank":16,"page":"International Organization for Standardization","pagerank":0.00104,"in_links":428,"out_links":150},{"rank":17,"page":"United Kingdom","pagerank":0.001037,"in_links":6053,"out_links":564},{"rank":18,"page":"The Guardian","pagerank":0.000953,"in_links":5298,"out_links":174},{"rank":19,"page":"Daylight saving time","pagerank":0.000936,"in_links":6899,"out_links":118},{"rank":20,"page":"France","pagerank":0.000888,"in_links":6089,"out_links":545}],"nodes":99998,"edges":8572670,"iterations":61,"dangling":203,"top1":0.2820961910590045,"check":{"max_abs_diff":1.0258365192727806e-07,"spearman":0.9999999955288651,"kendall_tau":0.9999968537901376,"top10_overlap":1.0}},"corr":{"cols":["PageRank","degree","betweenness","eigenvector","closeness"],"rows":[[1.0,0.979,0.879,0.676,0.825],[0.979,1.0,0.905,0.777,0.895],[0.879,0.905,1.0,0.694,0.898],[0.676,0.777,0.694,1.0,0.856],[0.825,0.895,0.898,0.856,1.0]]}};
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (x, k = 4) => x.toFixed(k);
+
+/* ---------- PageRank (port of pagerank_simple) ---------- */
+function pagerank(nodes, out, d = 0.85, tol = 1e-8, maxIter = 200, keep = false) {
+  const N = nodes.length, idx = new Map(nodes.map((u, i) => [u, i]));
+  const inc = nodes.map(() => []);
+  const L = nodes.map(u => (out.get(u) || []).length);
+  nodes.forEach((u, i) => (out.get(u) || []).forEach(v => inc[idx.get(v)].push(i)));
+  const dangling = L.map((l, i) => l === 0 ? i : -1).filter(i => i >= 0);
+  let pr = new Float64Array(N).fill(1 / N);
+  const hist = [], snaps = keep ? [Array.from(pr)] : null;
+  for (let t = 0; t < maxIter; t++) {
+    let dm = 0; for (const i of dangling) dm += pr[i];
+    const nw = new Float64Array(N);
+    let delta = 0;
+    for (let v = 0; v < N; v++) {
+      let s = 0; for (const u of inc[v]) s += pr[u] / L[u];
+      nw[v] = (1 - d) / N + d * (s + dm / N);
+      delta += Math.abs(nw[v] - pr[v]);
+    }
+    pr = nw; hist.push(delta); if (keep) snaps.push(Array.from(pr));
+    if (delta < tol) break;
+  }
+  return { pr, hist, snaps, dangling: dangling.length };
+}
+
+/* ---------- canvas helpers ---------- */
+function setupCanvas(c) { const ctx = c.getContext("2d"); return ctx; }
+function arrow(ctx, x1, y1, x2, y2, r2, col, w, r1 = 0) {
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  x1 += Math.cos(a) * r1; y1 += Math.sin(a) * r1;
+  const ex = x2 - Math.cos(a) * (r2 + 6), ey = y2 - Math.sin(a) * (r2 + 6);
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(ex, ey); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - 18 * Math.cos(a - .38), ey - 18 * Math.sin(a - .38));
+  ctx.lineTo(ex - 18 * Math.cos(a + .38), ey - 18 * Math.sin(a + .38));
+  ctx.closePath(); ctx.fill();
+}
+
+/* ---------- 1. TOY ---------- */
+const toyLinks = { A: ["B", "C"], B: ["C"], C: ["A"], D: ["C"] };
+const toyNodes = ["A", "B", "C", "D"];
+const toyPos = { A: [330, 260], B: [870, 260], C: [600, 640], D: [1020, 720] };
+const toyOut = new Map(Object.entries(toyLinks));
+const toyFull = pagerank(toyNodes, toyOut, 0.85, 1e-10, 200, true);
+let toyT = 0, toyTimer = null;
+function drawToy() {
+  const c = $("toyCanvas"), ctx = setupCanvas(c), pr = toyFull.snaps[toyT];
+  ctx.clearRect(0, 0, c.width, c.height);
+  const rad = p => 40 + p * 300;
+  for (const [u, vs] of Object.entries(toyLinks)) for (const v of vs) {
+    let [x1, y1] = toyPos[u], [x2, y2] = toyPos[v];
+    if ((u === "A" && v === "C") || (u === "C" && v === "A")) { const off = u === "A" ? -22 : 22; x1 += off; x2 += off; }
+    arrow(ctx, x1, y1, x2, y2, rad(pr[toyNodes.indexOf(v)]), css("--muted"), 4, rad(pr[toyNodes.indexOf(u)]));
+  }
+  toyNodes.forEach((u, i) => {
+    const [x, y] = toyPos[u], r = rad(pr[i]);
+    ctx.fillStyle = u === "C" ? css("--accent") : u === "D" ? css("--muted") : css("--hi");
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    if (r > 75) { ctx.fillStyle = "#fff"; ctx.font = "800 54px Archivo, Arial"; ctx.fillText(u, x, y - 14); ctx.font = "600 30px 'JetBrains Mono', monospace"; ctx.fillText(pr[i].toFixed(3), x, y + 30); }
+    else { ctx.fillStyle = "#fff"; ctx.font = "800 40px Archivo, Arial"; ctx.fillText(u, x, y + 2); ctx.fillStyle = css("--fg"); ctx.font = "600 30px 'JetBrains Mono', monospace"; ctx.fillText(pr[i].toFixed(3), x, y + r + 30); }
+  });
+  $("toyIt").textContent = toyT;
+  const dl = toyT ? toyFull.hist[toyT - 1] : null;
+  $("toyDelta").textContent = dl == null ? "–" : dl.toExponential(1);
+  const done = toyT === toyFull.snaps.length - 1;
+  $("toyConv").textContent = toyT === 0 ? "start" : done ? "converged" : "running";
+  $("toyConvBox").classList.toggle("ok", done);
+  const mx = Math.max(...toyFull.snaps.at(-1));
+  $("toyBody").innerHTML = toyNodes.map((u, i) => `<tr><td><b>${u}</b></td><td class="mono">${toyLinks[u].join(", ")}</td><td class="num">${fmt(pr[i])}</td><td><div class="bar" style="width:${pr[i] / mx * 100}%"></div></td></tr>`).join("");
+}
+$("toyStep").onclick = () => { if (toyT < toyFull.snaps.length - 1) toyT++; drawToy(); };
+$("toyReset").onclick = () => { clearInterval(toyTimer); toyT = 0; drawToy(); };
+$("toyRun").onclick = () => { clearInterval(toyTimer); toyTimer = setInterval(() => { if (toyT >= toyFull.snaps.length - 1) return clearInterval(toyTimer); toyT++; drawToy(); }, 90); };
+
+/* ---------- 2. KARATE ---------- */
+const K = DATA.karate;
+const kNodes = K.nodes.map(n => n.id);
+const kOut = new Map(kNodes.map(u => [u, []]));
+K.edges.forEach(([a, b]) => { kOut.get(a).push(b); kOut.get(b).push(a); });
+const kClub = new Map(K.nodes.map(n => [n.id, n.club]));
+const xs = K.nodes.map(n => n.x), ys = K.nodes.map(n => n.y);
+const [x0, x1] = [Math.min(...xs), Math.max(...xs)], [y0, y1] = [Math.min(...ys), Math.max(...ys)];
+const kPos = new Map(K.nodes.map(n => [n.id, [90 + (n.x - x0) / (x1 - x0) * 1020, 90 + (n.y - y0) / (y1 - y0) * 740]]));
+let kRes = null, kShown = null, kSel = null, kAnimTimer = null;
+function kCompute() {
+  const d = +$("kD").value; $("kDval").textContent = d.toFixed(2);
+  kRes = pagerank(kNodes, kOut, d, 1e-8, 500, true);
+  kShown = Array.from(kRes.pr); drawK(); tableK();
+}
+function drawK() {
+  const c = $("kCanvas"), ctx = setupCanvas(c);
+  ctx.clearRect(0, 0, c.width, c.height);
+  ctx.strokeStyle = css("--edge"); ctx.lineWidth = 2;
+  K.edges.forEach(([a, b]) => { const [p, q] = [kPos.get(a), kPos.get(b)]; ctx.beginPath(); ctx.moveTo(...p); ctx.lineTo(...q); ctx.stroke(); });
+  const order = kNodes.map((u, i) => i).sort((a, b) => kShown[a] - kShown[b]);
+  for (const i of order) {
+    const u = kNodes[i], [x, y] = kPos.get(u), r = 12 + Math.sqrt(kShown[i]) * 120;
+    ctx.fillStyle = kClub.get(u) === "Mr. Hi" ? css("--hi") : css("--off");
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.lineWidth = u === kSel ? 7 : 3; ctx.strokeStyle = u === kSel ? css("--fg") : css("--surface"); ctx.stroke();
+    ctx.fillStyle = "#fff"; ctx.font = `700 ${r > 40 ? 28 : 21}px Archivo, Arial`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(u, x, y + 1);
+  }
+}
+function tableK() {
+  const pr = kShown, idx = kNodes.map((u, i) => i).sort((a, b) => pr[b] - pr[a]).slice(0, 10);
+  if (kSel && !idx.some(i => kNodes[i] === kSel)) idx.push(kNodes.indexOf(kSel));
+  const mx = pr[idx[0]], deg = u => kOut.get(u).length;
+  const role = { 1: " · instructor", 34: " · administrator" };
+  $("kBody").innerHTML = idx.map((i, r) => { const u = kNodes[i], cl = kClub.get(u);
+    const rank = kNodes.map((_, j) => j).filter(j => pr[j] > pr[i]).length + 1;
+    return `<tr class="${u === kSel ? "sel" : ""}"><td>${rank}</td><td><b>${u}</b><span class="note">${role[u] || ""}</span></td><td><span class="chip ${cl === "Mr. Hi" ? "hi" : "off"}">${cl}</span></td><td class="num">${deg(u)}</td><td class="num">${fmt(pr[i])}</td><td><div class="bar" style="width:${pr[i] / mx * 100}%;background:${cl === "Mr. Hi" ? "var(--hi)" : "var(--off)"}"></div></td></tr>`; }).join("");
+  $("kIt").textContent = kRes.hist.length;
+  $("kRatio").textContent = (Math.max(...kRes.pr) / Math.min(...kRes.pr)).toFixed(1) + "×";
+}
+$("kD").oninput = () => { clearInterval(kAnimTimer); kCompute(); };
+$("kResetD").onclick = () => { $("kD").value = 0.85; clearInterval(kAnimTimer); kCompute(); };
+$("kAnim").onclick = () => {
+  clearInterval(kAnimTimer); let t = 0;
+  kAnimTimer = setInterval(() => { kShown = kRes.snaps[t]; drawK(); tableK(); $("kIt").textContent = t + " / " + kRes.hist.length; t++; if (t >= kRes.snaps.length) { clearInterval(kAnimTimer); $("kIt").textContent = kRes.hist.length; } }, 110);
+};
+$("kCanvas").addEventListener("click", e => {
+  const c = $("kCanvas"), b = c.getBoundingClientRect();
+  const x = (e.clientX - b.left) * c.width / b.width, y = (e.clientY - b.top) * c.height / b.height;
+  let best = null, bd = 1e9; kPos.forEach(([px, py], u) => { const dd = Math.hypot(px - x, py - y); if (dd < bd) { bd = dd; best = u; } });
+  kSel = bd < 70 ? (kSel === best ? null : best) : null; drawK(); tableK();
+});
+
+/* ---------- 3. WIKIPEDIA ---------- */
+function drawWiki() {
+  const W = DATA.wiki, rows = W.top20, svg = $("wSvg");
+  const mxP = rows[0].pagerank, mxI = Math.max(...rows.map(r => r.in_links));
+  const left = 300, width = 330, rowH = 30, top = 18;
+  let s = `<text x="${left}" y="12" font-size="11" style="fill:var(--muted)">0</text><text x="${left + width}" y="12" font-size="11" text-anchor="end" style="fill:var(--muted)">max</text>`;
+  rows.forEach((r, i) => {
+    const y = top + i * rowH, wp = r.pagerank / mxP * width, wi = r.in_links / mxI * width;
+    const name = r.page.length > 38 ? r.page.slice(0, 36) + "…" : r.page;
+    const hl = r.page.startsWith("International Organization");
+    s += `<text x="${left - 10}" y="${y + 13}" text-anchor="end" font-size="13" font-weight="${hl ? 700 : 400}">${i + 1}. ${name.replace(/&/g, "&amp;")}</text>`;
+    s += `<rect x="${left}" y="${y + 2}" width="${wp}" height="11" rx="2" style="fill:var(--accent)"/>`;
+    s += `<rect x="${left}" y="${y + 15}" width="${Math.max(wi, 1.5)}" height="6" rx="2" style="fill:var(--off)"/>`;
+    s += `<text x="${left + Math.max(wp, wi) + 6}" y="${y + 13}" font-size="11" font-family="JetBrains Mono, monospace" style="fill:var(--muted)">${r.pagerank.toFixed(4)} · ${r.in_links.toLocaleString()} in</text>`;
+  });
+  const ly = top + rows.length * rowH + 10;
+  s += `<rect x="${left}" y="${ly}" width="14" height="10" style="fill:var(--accent)"/><text x="${left + 20}" y="${ly + 9}" font-size="12">PageRank</text>`;
+  s += `<rect x="${left + 110}" y="${ly + 2}" width="14" height="6" style="fill:var(--off)"/><text x="${left + 130}" y="${ly + 9}" font-size="12">in-links</text>`;
+  svg.innerHTML = s;
+  $("wN").textContent = W.nodes.toLocaleString(); $("wE").textContent = W.edges.toLocaleString();
+  $("wI").textContent = W.iterations; $("wDg").textContent = W.dangling;
+  $("wTop").textContent = (W.top1 * 100).toFixed(1) + "%"; $("wChk").textContent = W.check.max_abs_diff.toExponential(1);
+}
+
+/* ---------- 4. CUSTOM ---------- */
+const SAMPLE = `# example: a small university website (made-up pages)
+home admissions
+home academics
+home placements
+home contact
+home news
+admissions home
+admissions fees
+admissions contact
+academics home
+academics cse-dept
+academics ece-dept
+academics admissions
+placements home
+placements contact
+contact home
+news home
+news news-convocation
+news news-hackathon
+news-convocation news
+news-hackathon news
+news-hackathon cse-dept
+cse-dept home
+cse-dept academics
+ece-dept home
+ece-dept academics
+fees admissions
+fees contact
+cse-dept fees-pdf`;
+let cLayout = null, cLast = null;
+function cRun() {
+  $("cErr").textContent = "";
+  const d = +$("cD").value; $("cDval").textContent = d.toFixed(2);
+  const lines = $("cText").value.split(/\n/).map(l => l.replace(/#.*/, "").trim()).filter(Boolean);
+  const edges = [];
+  for (const [n, l] of lines.entries()) {
+    const p = l.split(/[\s,;\t]+/).filter(Boolean);
+    if (p.length < 2) { $("cErr").textContent = `Line "${l}" needs two page names (source target).`; return; }
+    if (p[0] !== p[1]) edges.push([p[0], p[1]]);
+  }
+  if (!edges.length) { $("cErr").textContent = "Add at least one link, for example: home about"; return; }
+  const directed = $("cDir").value === "1";
+  const nodes = [...new Set(edges.flat())];
+  const out = new Map(nodes.map(u => [u, new Set()]));
+  edges.forEach(([a, b]) => { out.get(a).add(b); if (!directed) out.get(b).add(a); });
+  const outL = new Map([...out].map(([k, v]) => [k, [...v]]));
+  const res = pagerank(nodes, outL, d);
+  const indeg = new Map(nodes.map(u => [u, 0])); outL.forEach(vs => vs.forEach(v => indeg.set(v, indeg.get(v) + 1)));
+  const key = nodes.join("|") + directed;
+  if (!cLayout || cLayout.key !== key) cLayout = { key, pos: layout(nodes, outL) };
+  cLast = { nodes, outL, res, directed };
+  $("cN").textContent = nodes.length; $("cE").textContent = [...outL.values()].reduce((a, v) => a + v.length, 0) / (directed ? 1 : 2);
+  $("cDg").textContent = res.dangling; $("cIt").textContent = res.hist.length;
+  const idx = nodes.map((u, i) => i).sort((a, b) => res.pr[b] - res.pr[a]); const mx = res.pr[idx[0]];
+  $("cBody").innerHTML = idx.map((i, r) => `<tr><td>${r + 1}</td><td><b>${esc(nodes[i])}</b></td><td class="num">${indeg.get(nodes[i])}</td><td class="num">${outL.get(nodes[i]).length}</td><td class="num">${fmt(res.pr[i])}</td><td><div class="bar" style="width:${res.pr[i] / mx * 100}%"></div></td></tr>`).join("");
+  drawC();
+}
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function layout(nodes, out) {
+  const n = nodes.length, P = nodes.map((u, i) => [600 + 330 * Math.cos(2 * Math.PI * i / n), 450 + 300 * Math.sin(2 * Math.PI * i / n)]);
+  const id = new Map(nodes.map((u, i) => [u, i])), E = [];
+  out.forEach((vs, u) => vs.forEach(v => E.push([id.get(u), id.get(v)])));
+  for (let it = 0; it < 300; it++) {
+    const F = P.map(() => [0, 0]);
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const dx = P[i][0] - P[j][0], dy = P[i][1] - P[j][1], dd = Math.max(Math.hypot(dx, dy), 1), f = 60000 / (dd * dd); F[i][0] += f * dx / dd; F[i][1] += f * dy / dd; F[j][0] -= f * dx / dd; F[j][1] -= f * dy / dd; }
+    for (const [a, b] of E) { const dx = P[b][0] - P[a][0], dy = P[b][1] - P[a][1], dd = Math.max(Math.hypot(dx, dy), 1), f = (dd - 220) * .02; F[a][0] += f * dx / dd; F[a][1] += f * dy / dd; F[b][0] -= f * dx / dd; F[b][1] -= f * dy / dd; }
+    for (let i = 0; i < n; i++) { F[i][0] += (600 - P[i][0]) * .01; F[i][1] += (450 - P[i][1]) * .01; const m = Math.hypot(...F[i]), cap = 30 * (1 - it / 300) + 1; P[i][0] += F[i][0] / Math.max(1, m / cap); P[i][1] += F[i][1] / Math.max(1, m / cap); }
+  }
+  const xs = P.map(p => p[0]), ys = P.map(p => p[1]), [a, b, c, e] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  return P.map(([x, y]) => [130 + (x - a) / Math.max(b - a, 1) * 940, 110 + (y - c) / Math.max(e - c, 1) * 680]);
+}
+function drawC() {
+  if (!cLast) return;
+  const { nodes, outL, res, directed } = cLast, c = $("cCanvas"), ctx = setupCanvas(c), P = cLayout.pos, id = new Map(nodes.map((u, i) => [u, i]));
+  ctx.clearRect(0, 0, c.width, c.height);
+  const mx = Math.max(...res.pr), rad = i => 14 + Math.sqrt(res.pr[i] / mx) * 52;
+  outL.forEach((vs, u) => vs.forEach(v => { const a = id.get(u), b = id.get(v);
+    if (directed) arrow(ctx, P[a][0], P[a][1], P[b][0], P[b][1], rad(b), css("--edge"), 2.2, rad(a));
+    else if (a < b) { ctx.strokeStyle = css("--edge"); ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(...P[a]); ctx.lineTo(...P[b]); ctx.stroke(); } }));
+  nodes.forEach((u, i) => { const [x, y] = P[i], r = rad(i);
+    ctx.fillStyle = css("--accent"); ctx.globalAlpha = .35 + .65 * res.pr[i] / mx; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = css("--fg"); ctx.font = "600 22px Archivo, Arial"; ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(u.length > 18 ? u.slice(0, 17) + "…" : u, x, y + r + 4); });
+}
+$("cRun").onclick = cRun;
+$("cD").oninput = cRun;
+$("cDir").onchange = cRun;
+$("cSample").onclick = () => { $("cText").value = SAMPLE; cRun(); };
+
+/* ---------- routing ---------- */
+const VIEWS = ["toy", "karate", "wikipedia", "custom"];
+function show() {
+  const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "toy";
+  VIEWS.forEach(x => $("v-" + x).hidden = x !== v);
+  document.querySelectorAll("#tabs a").forEach(a => a.dataset.v === v ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  redraw();
+}
+function redraw() { drawToy(); drawK(); drawC(); }
+window.addEventListener("hashchange", show);
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+$("cText").value = SAMPLE;
+kCompute(); drawWiki(); cRun(); show();
+document.fonts && document.fonts.ready.then(redraw);
+</script>
+</body></html>

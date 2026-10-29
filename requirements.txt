@@ -1,0 +1,9 @@
+networkx>=3.0
+numpy
+scipy
+pandas
+matplotlib
+requests
+beautifulsoup4
+kagglehub
+jupyter
